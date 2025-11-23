@@ -16,24 +16,24 @@ from rss_subscribe.push_article_update import (
 )
 from push_rss_update.send_email import send_emails
 
-# ========== 日志设置 ==========
+# ========== Cài đặt logging ==========
 logging.basicConfig(
     level=logging.INFO,
     format='😋 %(levelname)s: %(message)s'
 )
 
-# ========== 加载配置 ==========
+# ========== Tải cấu hình ==========
 config = load_config("./conf.yaml")
 
-# ========== 爬虫模块 ==========
+# ========== Module crawler ==========
 if config["spider_settings"]["enable"]:
-    logging.info("✅ 爬虫已启用")
+    logging.info("✅ Crawler đã được kích hoạt")
 
     json_url = config['spider_settings']['json_url']
     article_count = config['spider_settings']['article_count']
     specific_rss = config['specific_RSS']
 
-    logging.info(f"📥 正在从 {json_url} 获取数据，每个博客获取 {article_count} 篇文章")
+    logging.info(f"📥 Đang lấy dữ liệu từ {json_url}, mỗi blog lấy {article_count} bài viết")
     result, lost_friends = fetch_and_process_data(
         json_url=json_url,
         specific_RSS=specific_rss,
@@ -42,13 +42,13 @@ if config["spider_settings"]["enable"]:
 
     if config["spider_settings"]["merge_result"]["enable"]:
         merge_url = config['spider_settings']["merge_result"]['merge_json_url']
-        logging.info(f"🔀 合并功能开启，从 {merge_url} 获取外部数据")
+        logging.info(f"🔀 Tính năng merge đã bật, lấy dữ liệu từ {merge_url}")
 
         result = marge_data_from_json_url(result, f"{merge_url}/all.json")
         lost_friends = marge_errors_from_json_url(lost_friends, f"{merge_url}/errors.json")
 
     article_count = len(result.get("article_data", []))
-    logging.info(f"📦 数据获取完毕，共有 {article_count} 位好友的动态，正在处理数据")
+    logging.info(f"📦 Đã lấy xong dữ liệu, có {article_count} bạn bè có hoạt động, đang xử lý dữ liệu")
 
     result = deal_with_large_data(result)
 
@@ -58,7 +58,7 @@ if config["spider_settings"]["enable"]:
     with open("errors.json", "w", encoding="utf-8") as f:
         json.dump(lost_friends, f, ensure_ascii=False, indent=2)
 
-# ========== 邮箱推送准备 ==========
+# ========== Chuẩn bị gửi email ==========
 SMTP_isReady = False
 
 sender_email = ""
@@ -68,7 +68,7 @@ use_tls = False
 password = ""
 
 if config["email_push"]["enable"] or config["rss_subscribe"]["enable"]:
-    logging.info("📨 推送功能已启用，正在准备中...")
+    logging.info("📨 Tính năng push đã được kích hoạt, đang chuẩn bị...")
 
     smtp_conf = config["smtp"]
     sender_email = smtp_conf["email"]
@@ -77,32 +77,32 @@ if config["email_push"]["enable"] or config["rss_subscribe"]["enable"]:
     use_tls = smtp_conf["use_tls"]
     password = os.getenv("SMTP_PWD")
 
-    logging.info(f"📡 SMTP 服务器：{server}:{port}")
+    logging.info(f"📡 SMTP server: {server}:{port}")
     if not password or not sender_email or not server or not port:
-        logging.error("❌ 环境变量 SMTP_PWD 未设置，无法发送邮件")
+        logging.error("❌ Biến môi trường SMTP_PWD chưa được thiết lập, không thể gửi email")
     else:
-        logging.info(f"🔐 密码(部分)：{password[:3]}*****")
+        logging.info(f"🔐 Mật khẩu(phần): {password[:3]}*****")
         SMTP_isReady = True
 
-# ========== 邮件推送（待实现）==========
+# ========== Gửi email (chưa triển khai) ==========
 if config["email_push"]["enable"] and SMTP_isReady:
-    logging.info("📧 邮件推送已启用")
-    logging.info("⚠️ 抱歉，目前尚未实现邮件推送功能")
+    logging.info("📧 Gửi email đã được kích hoạt")
+    logging.info("⚠️ Xin lỗi, tính năng gửi email hiện chưa được triển khai")
 
-# ========== RSS 订阅推送 ==========
+# ========== Push RSS subscription ==========
 if config["rss_subscribe"]["enable"] and SMTP_isReady:
-    logging.info("📰 RSS 订阅推送已启用")
+    logging.info("📰 Push RSS subscription đã được kích hoạt")
 
-    # 获取 GitHub 仓库信息
-    fcl_repo = os.getenv('FCL_REPO') # 仓库内置
+    # Lấy thông tin GitHub repository
+    fcl_repo = os.getenv('FCL_REPO') # Repository built-in
     if fcl_repo:
         github_username, github_repo = fcl_repo.split('/')
     else:
         github_username = str(config["rss_subscribe"]["github_username"]).strip()
         github_repo = str(config["rss_subscribe"]["github_repo"]).strip()
 
-    logging.info(f"👤 GitHub 用户名：{github_username}")
-    logging.info(f"📁 GitHub 仓库：{github_repo}")
+    logging.info(f"👤 GitHub username: {github_username}")
+    logging.info(f"📁 GitHub repository: {github_repo}")
 
     your_blog_url = config["rss_subscribe"]["your_blog_url"]
     email_template = config["rss_subscribe"]["email_template"]
@@ -111,26 +111,26 @@ if config["rss_subscribe"]["enable"] and SMTP_isReady:
     latest_articles = get_latest_articles_from_link(
         url=your_blog_url,
         count=5,
-        last_articles_path="./rss_subscribe/last_articles.json" # 存储上一次的文章
+        last_articles_path="./rss_subscribe/last_articles.json" # Lưu bài viết lần trước
     )
 
     if not latest_articles:
-        logging.info("📭 无新文章，无需推送")
+        logging.info("📭 Không có bài viết mới, không cần push")
     else:
-        logging.info(f"🆕 获取到的最新文章：{latest_articles}")
+        logging.info(f"🆕 Bài viết mới nhất nhận được: {latest_articles}")
 
         github_api_url = (
             f"https://api.github.com/repos/{github_username}/{github_repo}/issues"
             f"?state=closed&label=subscribed&per_page=200"
         )
-        logging.info(f"🔎 正在从 GitHub 获取订阅邮箱：{github_api_url}")
+        logging.info(f"🔎 Đang lấy email subscription từ GitHub: {github_api_url}")
         email_list = extract_emails_from_issues(github_api_url)
 
         if not email_list:
-            logging.info("⚠️ 无订阅邮箱，请检查格式或是否有订阅者")
+            logging.info("⚠️ Không có email subscription, vui lòng kiểm tra định dạng hoặc có người subscribe không")
             sys.exit(0)
 
-        logging.info(f"📬 获取到邮箱列表：{email_list}")
+        logging.info(f"📬 Nhận được danh sách email: {email_list}")
 
         for article in latest_articles:
             template_data = {
@@ -151,12 +151,12 @@ if config["rss_subscribe"]["enable"] and SMTP_isReady:
                 smtp_server=server,
                 port=port,
                 password=password,
-                subject=f"{website_title} の最新文章：{article['title']}",
+                subject=f"{website_title} のBài viết mới nhất: {article['title']}",
                 body=(
-                    f"📄 文章标题：{article['title']}\n"
-                    f"🔗 链接：{article['link']}\n"
-                    f"📝 简介：{article['summary']}\n"
-                    f"🕒 发布时间：{article['published']}"
+                    f"📄 Tiêu đề bài viết: {article['title']}\n"
+                    f"🔗 Liên kết: {article['link']}\n"
+                    f"📝 Giới thiệu: {article['summary']}\n"
+                    f"🕒 Thời gian xuất bản: {article['published']}"
                 ),
                 template_path=email_template,
                 template_data=template_data,
