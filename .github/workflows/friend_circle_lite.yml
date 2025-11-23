@@ -70,7 +70,7 @@ jobs:
           cd pages
           git init
           git add .
-          git commit -m "⏱️ $(date +"%Y年%m月%d日-%H时%M分") GitHub Actions定时更新"
+          git commit -m "⏱️ $(date +"Ngày %d/%m/%Y - %H:%M") GitHub Actions cập nhật tự động"
           git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:page
 
       - name: Delete Workflow Runs
