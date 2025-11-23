@@ -1,18 +1,18 @@
 function initialize_fc_lite() {
 
-    // 用户配置
-    // 设置默认配置
+    // Cấu hình người dùng
+    // Thiết lập cấu hình mặc định
     UserConfig = {
         private_api_url: UserConfig?.private_api_url || "", 
-        page_turning_number: UserConfig?.page_turning_number || 20, // 默认20篇
-        error_img: UserConfig?.error_img || "https://fastly.jsdelivr.net/gh/willow-god/Friend-Circle-Lite@latest/static/favicon.ico" // 默认头像
+        page_turning_number: UserConfig?.page_turning_number || 20, // Mặc định 20 bài
+        error_img: UserConfig?.error_img || "https://fastly.jsdelivr.net/gh/willow-god/Friend-Circle-Lite@latest/static/favicon.ico" // Avatar mặc định
     };
 
     const root = document.getElementById('friend-circle-lite-root');
     
-    if (!root) return; // 确保根元素存在
+    if (!root) return; // Đảm bảo phần tử gốc tồn tại
 
-    // 清除之前的内容
+    // Xóa nội dung trước đó
     root.innerHTML = '';
 
     const randomArticleContainer = document.createElement('div');
@@ -26,16 +26,16 @@ function initialize_fc_lite() {
     
     const loadMoreBtn = document.createElement('button');
     loadMoreBtn.id = 'load-more-btn';
-    loadMoreBtn.innerText = '再来亿点';
+    loadMoreBtn.innerText = 'Thêm nữa';
     root.appendChild(loadMoreBtn);
 
-    // 创建统计信息容器
+    // Tạo container thông tin thống kê
     const statsContainer = document.createElement('div');
     statsContainer.id = 'stats-container';
     root.appendChild(statsContainer);
 
-    let start = 0; // 记录加载起始位置
-    let allArticles = []; // 存储所有文章
+    let start = 0; // Ghi lại vị trí bắt đầu tải
+    let allArticles = []; // Lưu trữ tất cả bài viết
 
     function loadMoreArticles() {
         const cacheKey = 'friend-circle-lite-cache';
@@ -43,7 +43,7 @@ function initialize_fc_lite() {
         const cacheTime = localStorage.getItem(cacheTimeKey);
         const now = new Date().getTime();
 
-        if (cacheTime && (now - cacheTime < 10 * 60 * 1000)) { // 缓存时间小于10分钟
+        if (cacheTime && (now - cacheTime < 10 * 60 * 1000)) { // Thời gian cache nhỏ hơn 10 phút
             const cachedData = JSON.parse(localStorage.getItem(cacheKey));
             if (cachedData) {
                 processArticles(cachedData);
@@ -59,22 +59,22 @@ function initialize_fc_lite() {
                 processArticles(data);
             })
             .finally(() => {
-                loadMoreBtn.innerText = '再来亿点'; // 恢复按钮文本
+                loadMoreBtn.innerText = 'Thêm nữa'; // Khôi phục văn bản nút
             });
     }
 
     function processArticles(data) {
         allArticles = data.article_data;
-        // 处理统计数据
+        // Xử lý dữ liệu thống kê
         const stats = data.statistical_data;
         statsContainer.innerHTML = `
-            <div>Powered by: <a href="https://github.com/willow-god/Friend-Circle-Lite" target="_blank">FriendCircleLite</a><br></div>
-            <div>Designed By: <a href="https://www.liushen.fun/" target="_blank">LiuShen</a><br></div>
-            <div>订阅:${stats.friends_num}   活跃:${stats.active_num}   总文章数:${stats.article_num}<br></div>
-            <div>更新时间:${stats.last_updated_time}</div>
+            <div>Powered by: <a href="https://www.facebook.com/thinhem.ic" target="_blank">Phung Duy Thinh</a><br></div>
+            <div>Designed By: <a href="https://blog.inlove.eu.org" target="_blank">.Thinhem</a><br></div>
+            <div>Subscribe:${stats.friends_num}   Active:${stats.active_num}   Total articles:${stats.article_num}<br></div>
+            <div>Update time:${stats.last_updated_time}</div>
         `;
 
-        displayRandomArticle(); // 显示随机友链卡片
+        displayRandomArticle(); // Hiển thị thẻ bạn bè ngẫu nhiên
 
         const articles = allArticles.slice(start, start + UserConfig.page_turning_number);
 
@@ -92,8 +92,8 @@ function initialize_fc_lite() {
             author.className = 'card-author';
             const authorImg = document.createElement('img');
             authorImg.className = 'no-lightbox';
-            authorImg.src = article.avatar || UserConfig.error_img; // 使用默认头像
-            authorImg.onerror = () => authorImg.src = UserConfig.error_img; // 头像加载失败时使用默认头像
+            authorImg.src = article.avatar || UserConfig.error_img; // Sử dụng avatar mặc định
+            authorImg.onerror = () => authorImg.src = UserConfig.error_img; // Sử dụng avatar mặc định khi tải avatar thất bại
             author.appendChild(authorImg);
             author.appendChild(document.createTextNode(article.author));
             card.appendChild(author);
@@ -110,7 +110,7 @@ function initialize_fc_lite() {
             const bgImg = document.createElement('img');
             bgImg.className = 'card-bg no-lightbox';
             bgImg.src = article.avatar || UserConfig.error_img;
-            bgImg.onerror = () => bgImg.src = UserConfig.error_img; // 头像加载失败时使用默认头像
+            bgImg.onerror = () => bgImg.src = UserConfig.error_img; // Sử dụng avatar mặc định khi tải avatar thất bại
             card.appendChild(bgImg);
 
             container.appendChild(card);
@@ -119,35 +119,35 @@ function initialize_fc_lite() {
         start += UserConfig.page_turning_number;
 
         if (start >= allArticles.length) {
-            loadMoreBtn.style.display = 'none'; // 隐藏按钮
+            loadMoreBtn.style.display = 'none'; // Ẩn nút
         }
     }
 
-    // 显示随机文章的逻辑
+    // Logic hiển thị bài viết ngẫu nhiên
     function displayRandomArticle() {
         const randomArticle = allArticles[Math.floor(Math.random() * allArticles.length)];
         randomArticleContainer.innerHTML = `
             <div class="random-container">
-                <div class="random-container-title">随机钓鱼</div>
+                <div class="random-container-title">Ngẫu nhiên</div>
                 <div class="random-title">${randomArticle.title}</div>
-                <div class="random-author">作者: ${randomArticle.author}</div>
+                <div class="random-author">Tác giả: ${randomArticle.author}</div>
             </div>
             <div class="random-button-container">
-                <a href="#" id="refresh-random-article">刷新</a>
-                <button class="random-link-button" onclick="window.open('${randomArticle.link}', '_blank')">过去转转</button>
+                <a href="#" id="refresh-random-article">Làm mới</a>
+                <button class="random-link-button" onclick="window.open('${randomArticle.link}', '_blank')">Ghé thăm</button>
             </div>
         `;
 
-        // 为刷新按钮添加事件监听器
+        // Thêm trình nghe sự kiện cho nút làm mới
         const refreshBtn = document.getElementById('refresh-random-article');
         refreshBtn.addEventListener('click', function (event) {
-            event.preventDefault(); // 阻止默认的跳转行为
-            displayRandomArticle(); // 调用显示随机文章的逻辑
+            event.preventDefault(); // Ngăn chặn hành vi chuyển hướng mặc định
+            displayRandomArticle(); // Gọi logic hiển thị bài viết ngẫu nhiên
         });
     }
 
     function showAuthorArticles(author, avatar, link) {
-        // 如果不存在，则创建模态框结构
+        // Tạo cấu trúc modal nếu không tồn tại
         if (!document.getElementById('fclite-modal')) {
             const modal = document.createElement('div');
             modal.id = 'modal';
@@ -169,16 +169,16 @@ function initialize_fc_lite() {
         const modalAuthorNameLink = document.getElementById('modal-author-name-link');
         const modalBg = document.getElementById('modal-bg');
 
-        modalArticlesContainer.innerHTML = ''; // 清空之前的内容
-        modalAuthorAvatar.src = avatar  || UserConfig.error_img; // 使用默认头像
-        modalAuthorAvatar.onerror = () => modalAuthorAvatar.src = UserConfig.error_img; // 头像加载失败时使用默认头像
-        modalBg.src = avatar || UserConfig.error_img; // 使用默认头像
-        modalBg.onerror = () => modalBg.src = UserConfig.error_img; // 头像加载失败时使用默认头像
+        modalArticlesContainer.innerHTML = ''; // Xóa nội dung trước đó
+        modalAuthorAvatar.src = avatar  || UserConfig.error_img; // Sử dụng avatar mặc định
+        modalAuthorAvatar.onerror = () => modalAuthorAvatar.src = UserConfig.error_img; // Sử dụng avatar mặc định khi tải avatar thất bại
+        modalBg.src = avatar || UserConfig.error_img; // Sử dụng avatar mặc định
+        modalBg.onerror = () => modalBg.src = UserConfig.error_img; // Sử dụng avatar mặc định khi tải avatar thất bại
         modalAuthorNameLink.innerText = author;
         modalAuthorNameLink.href = new URL(link).origin;
 
         const authorArticles = allArticles.filter(article => article.author === author);
-        // 仅仅取前五个，防止文章过多导致模态框过长，如果不够五个则全部取出
+        // Chỉ lấy năm bài đầu tiên, ngăn modal quá dài do quá nhiều bài viết, nếu không đủ năm thì lấy tất cả
         authorArticles.slice(0, 4).forEach(article => {
             const articleDiv = document.createElement('div');
             articleDiv.className = 'modal-article';
@@ -198,14 +198,14 @@ function initialize_fc_lite() {
             modalArticlesContainer.appendChild(articleDiv);
         });
 
-        // 设置类名以触发显示动画
+        // Đặt tên lớp để kích hoạt hiệu ứng hiển thị
         modal.style.display = 'block';
         setTimeout(() => {
             modal.classList.add('modal-open');
-        }, 10); // 确保显示动画触发
+        }, 10); // Đảm bảo hiệu ứng hiển thị được kích hoạt
     }
 
-    // 隐藏模态框的函数
+    // Hàm ẩn modal
     function hideModal() {
         const modal = document.getElementById('modal');
         modal.classList.remove('modal-open');
@@ -215,13 +215,13 @@ function initialize_fc_lite() {
         }, { once: true });
     }
 
-    // 初始加载
+    // Tải ban đầu
     loadMoreArticles();
 
-    // 加载更多按钮点击事件
+    // Sự kiện nhấp nút tải thêm
     loadMoreBtn.addEventListener('click', loadMoreArticles);
 
-    // 点击遮罩层关闭模态框
+    // Nhấp vào lớp phủ để đóng modal
     window.onclick = function(event) {
         const modal = document.getElementById('modal');
         if (event.target === modal) {
