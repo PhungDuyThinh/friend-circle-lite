@@ -8,7 +8,7 @@ import requests
 import feedparser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 标准化的请求头
+# Tiêu đề request chuẩn hóa
 HEADERS_JSON = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -27,29 +27,29 @@ HEADERS_XML = {
         "(Friend-Circle-Lite/1.0; +https://github.com/willow-god/Friend-Circle-Lite)"
     ),
     "Accept": "application/atom+xml, application/rss+xml, application/xml;q=0.9, */*;q=0.8",
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8",
     "Accept-Encoding": "gzip, deflate",
     "Connection": "keep-alive",
     "X-Friend-Circle": "1.0"
 }
 
-timeout = (10, 15) # 连接超时和读取超时，防止requests接受时间过长
+timeout = (10, 15) # Thời gian chờ kết nối và đọc, ngăn requests nhận quá lâu
 
 def format_published_time(time_str):
     """
-    格式化发布时间为统一格式 YYYY-MM-DD HH:MM
+    Định dạng thời gian xuất bản thành định dạng thống nhất YYYY-MM-DD HH:MM
 
-    参数:
-    time_str (str): 输入的时间字符串，可能是多种格式。
+    Tham số:
+    time_str (str): Chuỗi thời gian đầu vào, có thể là nhiều định dạng.
 
-    返回:
-    str: 格式化后的时间字符串，若解析失败返回空字符串。
+    Trả về:
+    str: Chuỗi thời gian đã định dạng, trả về chuỗi rỗng nếu phân tích thất bại.
     """
-    # 尝试自动解析输入时间字符串
+    # Thử phân tích tự động chuỗi thời gian đầu vào
     try:
         parsed_time = parser.parse(time_str, fuzzy=True)
     except (ValueError, parser.ParserError):
-        # 定义支持的时间格式
+        # Định nghĩa các định dạng thời gian được hỗ trợ
         time_formats = [
             '%a, %d %b %Y %H:%M:%S %z',  # Mon, 11 Mar 2024 14:08:32 +0000
             '%a, %d %b %Y %H:%M:%S GMT',   # Wed, 19 Jun 2024 09:43:53 GMT
@@ -65,10 +65,10 @@ def format_published_time(time_str):
             except ValueError:
                 continue
         else:
-            logging.warning(f"无法解析时间字符串：{time_str}")
+            logging.warning(f"Không thể phân tích chuỗi thời gian: {time_str}")
             return ''
 
-    # 处理时区转换
+    # Xử lý chuyển đổi múi giờ
     if parsed_time.tzinfo is None:
         parsed_time = parsed_time.replace(tzinfo=timezone.utc)
     shanghai_time = parsed_time.astimezone(timezone(timedelta(hours=8)))
@@ -78,33 +78,34 @@ def format_published_time(time_str):
 
 def check_feed(friend, session):
     """
-    检查博客的 RSS 或 Atom 订阅链接。
+    Kiểm tra liên kết RSS hoặc Atom subscription của blog.
 
-    此函数接受一个博客，尝试在提取后拼接 '/atom.xml', '/rss2.xml' 和 '/feed'，并检查这些链接是否可访问。
-    Atom 优先，如果都不能访问，则返回 ['none', 源地址]。
+    Hàm này nhận một blog, thử nối '/atom.xml', '/rss2.xml' và '/feed' sau khi trích xuất, 
+    và kiểm tra xem các liên kết này có thể truy cập được không.
+    Ưu tiên Atom, nếu không thể truy cập được, trả về ['none', địa chỉ nguồn].
 
-    参数：
-    friend (dict): 包含朋友信息的字典。
-    session (requests.Session): 用于请求的会话对象。
+    Tham số:
+    friend (dict): Từ điển chứa thông tin bạn bè.
+    session (requests.Session): Đối tượng session dùng cho request.
 
-    返回：
-    list: 包含类型和拼接后的链接的列表。如果 atom 链接可访问，则返回 ['atom', atom_url]；
-            如果 rss2 链接可访问，则返回 ['rss2', rss_url]；
-            如果 feed 链接可访问，则返回 ['feed', feed_url]；
-            如果都不可访问，则返回 ['none', blog_url]。
+    Trả về:
+    list: Danh sách chứa loại và liên kết đã nối. Nếu liên kết atom có thể truy cập, trả về ['atom', atom_url];
+            Nếu liên kết rss2 có thể truy cập, trả về ['rss2', rss_url];
+            Nếu liên kết feed có thể truy cập, trả về ['feed', feed_url];
+            Nếu không thể truy cập, trả về ['none', blog_url].
     """
     blog_url = friend.get("link", "")
     rsslink = friend.get("rss", "")
     
     possible_feeds = [
         ('atom', '/atom.xml'),
-        ('rss', '/rss.xml'), # 2024-07-26 添加 /rss.xml内容的支持
+        ('rss', '/rss.xml'), # 2024-07-26 Thêm hỗ trợ nội dung /rss.xml
         ('rss2', '/rss2.xml'),
-        ('rss3', '/rss.php'), # 2024-12-07 添加 /rss.php内容的支持
+        ('rss3', '/rss.php'), # 2024-12-07 Thêm hỗ trợ nội dung /rss.php
         ('feed', '/feed'),
-        ('feed2', '/feed.xml'), # 2024-07-26 添加 /feed.xml内容的支持
+        ('feed2', '/feed.xml'), # 2024-07-26 Thêm hỗ trợ nội dung /feed.xml
         ('feed3', '/feed/'),
-        ('index', '/index.xml') # 2024-07-25 添加 /index.xml内容的支持
+        ('index', '/index.xml') # 2024-07-25 Thêm hỗ trợ nội dung /index.xml
     ]
 
     for feed_type, path in possible_feeds:
@@ -115,23 +116,23 @@ def check_feed(friend, session):
                 return [feed_url.split('/')[-1].split('.')[0], feed_url]
         except requests.RequestException:
             continue
-    logging.warning(f"无法找到订阅链接：{friend}")
+    logging.warning(f"Không thể tìm thấy liên kết subscription: {friend}")
     return ['none', friend.get("link", "")]
 
 def parse_feed(url, session, count=5, blog_url=''):
     """
-    解析 Atom 或 RSS2 feed 并返回包含网站名称、作者、原链接和每篇文章详细内容的字典。
+    Phân tích feed Atom hoặc RSS2 và trả về từ điển chứa tên website, tác giả, liên kết gốc và nội dung chi tiết của mỗi bài viết.
 
-    此函数接受一个 feed 的地址（atom.xml 或 rss2.xml），解析其中的数据，并返回一个字典结构，
-    其中包括网站名称、作者、原链接和每篇文章的详细内容。
+    Hàm này nhận một địa chỉ feed (atom.xml hoặc rss2.xml), phân tích dữ liệu trong đó và trả về một cấu trúc từ điển,
+    bao gồm tên website, tác giả, liên kết gốc và nội dung chi tiết của mỗi bài viết.
 
-    参数：
-    url (str): Atom 或 RSS2 feed 的 URL。
-    session (requests.Session): 用于请求的会话对象。
-    count (int): 获取文章数的最大数。如果小于则全部获取，如果文章数大于则只取前 count 篇文章。
+    Tham số:
+    url (str): URL của feed Atom hoặc RSS2.
+    session (requests.Session): Đối tượng session dùng cho request.
+    count (int): Số bài viết tối đa cần lấy. Nếu nhỏ hơn thì lấy tất cả, nếu số bài viết lớn hơn thì chỉ lấy count bài viết đầu tiên.
 
-    返回：
-    dict: 包含网站名称、作者、原链接和每篇文章详细内容的字典。
+    Trả về:
+    dict: Từ điển chứa tên website, tác giả, liên kết gốc và nội dung chi tiết của mỗi bài viết.
     """
     try:
         response = session.get(url, headers=HEADERS_XML, timeout=timeout)
@@ -151,13 +152,13 @@ def parse_feed(url, session, count=5, blog_url=''):
                 published = format_published_time(entry.published)
             elif 'updated' in entry:
                 published = format_published_time(entry.updated)
-                # 输出警告信息
-                logging.warning(f"文章 {entry.title} 未包含发布时间，已使用更新时间 {published}")
+                # Xuất thông tin cảnh báo
+                logging.warning(f"Bài viết {entry.title} không chứa thời gian xuất bản, đã sử dụng thời gian cập nhật {published}")
             else:
                 published = ''
-                logging.warning(f"文章 {entry.title} 未包含任何时间信息, 请检查原文, 设置为默认时间")
+                logging.warning(f"Bài viết {entry.title} không chứa bất kỳ thông tin thời gian nào, vui lòng kiểm tra bài gốc, đặt thành thời gian mặc định")
             
-            # 处理链接中可能存在的错误，比如ip或localhost
+            # Xử lý lỗi có thể có trong liên kết, ví dụ như ip hoặc localhost
             article_link = replace_non_domain(entry.link, blog_url) if 'link' in entry else '' # type: ignore
             
             article = {
@@ -170,14 +171,14 @@ def parse_feed(url, session, count=5, blog_url=''):
             }
             result['articles'].append(article)
         
-        # 对文章按时间排序，并只取前 count 篇文章
+        # Sắp xếp bài viết theo thời gian và chỉ lấy count bài viết đầu tiên
         result['articles'] = sorted(result['articles'], key=lambda x: datetime.strptime(x['published'], '%Y-%m-%d %H:%M'), reverse=True)
         if count < len(result['articles']):
             result['articles'] = result['articles'][:count]
         
         return result
     except Exception as e:
-        logging.error(f"无法解析FEED地址：{url} ，请自行排查原因！")
+        logging.error(f"Không thể phân tích địa chỉ FEED: {url}, vui lòng tự kiểm tra nguyên nhân!")
         return {
             'website_name': '',
             'author': '',
@@ -187,61 +188,61 @@ def parse_feed(url, session, count=5, blog_url=''):
 
 def replace_non_domain(link: str, blog_url: str) -> str:
     """
-    暂未实现
-    检测并替换字符串中的非正常域名部分（如 IP 地址或 localhost），替换为 blog_url。
-    替换后强制使用 https，且考虑 blog_url 尾部是否有斜杠。
+    Chưa triển khai
+    Phát hiện và thay thế phần tên miền không bình thường trong chuỗi (như địa chỉ IP hoặc localhost), thay thế bằng blog_url.
+    Sau khi thay thế bắt buộc sử dụng https, và xem xét blog_url có dấu gạch chéo ở cuối không.
 
-    :param link: 原始地址字符串
-    :param blog_url: 替换为的博客地址
-    :return: 替换后的地址字符串
+    :param link: Chuỗi địa chỉ gốc
+    :param blog_url: Địa chỉ blog thay thế
+    :return: Chuỗi địa chỉ sau khi thay thế
     """
     
-    # 提取link中的路径部分，无需协议和域名
+    # Trích xuất phần đường dẫn trong link, không cần giao thức và tên miền
     # path = re.sub(r'^https?://[^/]+', '', link)
     # print(path)
     
     try:
         parsed = urlparse(link)
-        if 'localhost' in parsed.netloc or re.match(r'^\d{1,3}(\.\d{1,3}){3}$', parsed.netloc):  # IP地址或localhost
-            # 提取 path + query
+        if 'localhost' in parsed.netloc or re.match(r'^\d{1,3}(\.\d{1,3}){3}$', parsed.netloc):  # Địa chỉ IP hoặc localhost
+            # Trích xuất path + query
             path = parsed.path or '/'
             if parsed.query:
                 path += '?' + parsed.query
             return urljoin(blog_url.rstrip('/') + '/', path.lstrip('/'))
         else:
-            return link  # 合法域名则返回原链接
+            return link  # Tên miền hợp lệ thì trả về liên kết gốc
     except Exception as e:
-        logging.warning(f"替换链接时出错：{link}, error: {e}")
+        logging.warning(f"Lỗi khi thay thế liên kết: {link}, error: {e}")
         return link
 
 def process_friend(friend, session, count, specific_RSS=[]):
     """
-    处理单个朋友的博客信息。
+    Xử lý thông tin blog của một người bạn.
 
-    参数：
-    friend (list): 包含朋友信息的列表 [name, blog_url, avatar]。
-    session (requests.Session): 用于请求的会话对象。
-    count (int): 获取每个博客的最大文章数。
-    specific_RSS (list): 包含特定 RSS 源的字典列表 [{name, url}]
+    Tham số:
+    friend (list): Danh sách chứa thông tin bạn bè [name, blog_url, avatar].
+    session (requests.Session): Đối tượng session dùng cho request.
+    count (int): Số bài viết tối đa cho mỗi blog.
+    specific_RSS (list): Danh sách từ điển chứa nguồn RSS cụ thể [{name, url}]
 
-    返回：
-    dict: 包含朋友博客信息的字典。
+    Trả về:
+    dict: Từ điển chứa thông tin blog của bạn bè.
     """
     name = friend.get("name", "")
     blog_url = friend.get("link", "")
     avatar = friend.get("avatar", "")
     
-    # 如果 specific_RSS 中有对应的 name，则直接返回 feed_url
+    # Nếu specific_RSS có name tương ứng, trả về trực tiếp feed_url
     if specific_RSS is None:
         specific_RSS = []
     rss_feed = next((rss['url'] for rss in specific_RSS if rss['name'] == name), None)
     if rss_feed:
         feed_url = rss_feed
         feed_type = 'specific'
-        logging.info(f"“{name}”的博客“ {blog_url} ”为特定RSS源“ {feed_url} ”")
+        logging.info(f"Blog \"{name}\" \" {blog_url} \" là nguồn RSS cụ thể \" {feed_url} \"")
     else:
         feed_type, feed_url = check_feed(friend, session)
-        logging.info(f"“{name}”的博客“ {blog_url} ”的feed类型为“{feed_type}”, feed地址为“ {feed_url} ”")
+        logging.info(f"Loại feed của blog \"{name}\" \" {blog_url} \" là \"{feed_type}\", địa chỉ feed là \" {feed_url} \"")
 
     if feed_type != 'none':
         feed_info = parse_feed(feed_url, session, count, blog_url)
@@ -257,7 +258,7 @@ def process_friend(friend, session, count, specific_RSS=[]):
         ]
         
         for article in articles:
-            logging.info(f"{name} 发布了新文章：{article['title']}，时间：{article['created']}，链接：{article['link']}")
+            logging.info(f"{name} đã xuất bản bài viết mới: {article['title']}, thời gian: {article['created']}, liên kết: {article['link']}")
         
         return {
             'name': name,
@@ -265,7 +266,7 @@ def process_friend(friend, session, count, specific_RSS=[]):
             'articles': articles
         }
     else:
-        logging.warning(f"{name} 的博客 {blog_url} 无法访问")
+        logging.warning(f"Blog {blog_url} của {name} không thể truy cập")
         return {
             'name': name,
             'status': 'error',
@@ -274,15 +275,15 @@ def process_friend(friend, session, count, specific_RSS=[]):
 
 def fetch_and_process_data(json_url, specific_RSS=[], count=5):
     """
-    读取 JSON 数据并处理订阅信息，返回统计数据和文章信息。
+    Đọc dữ liệu JSON và xử lý thông tin subscription, trả về dữ liệu thống kê và thông tin bài viết.
 
-    参数：
-    json_url (str): 包含朋友信息的 JSON 文件的 URL。
-    count (int): 获取每个博客的最大文章数。
-    specific_RSS (list): 包含特定 RSS 源的字典列表 [{name, url}]
+    Tham số:
+    json_url (str): URL của file JSON chứa thông tin bạn bè.
+    count (int): Số bài viết tối đa cho mỗi blog.
+    specific_RSS (list): Danh sách từ điển chứa nguồn RSS cụ thể [{name, url}]
 
-    返回：
-    dict: 包含统计数据和文章信息的字典。
+    Trả về:
+    dict: Từ điển chứa dữ liệu thống kê và thông tin bài viết.
     """
     session = requests.Session()
     
@@ -290,16 +291,16 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
         response = session.get(json_url, headers=HEADERS_JSON, timeout=timeout)
         friends_data = response.json()
     except Exception as e:
-        logging.error(f"无法获取链接：{json_url} ：{e}", exc_info=True)
+        logging.error(f"Không thể lấy liên kết: {json_url} :{e}", exc_info=True)
         return None
 
-    # Only get friends from child which have id_name = "cf-links"
+    # Chỉ lấy bạn bè từ con có id_name = "cf-links"
     for category in friends_data['friends']:
         if category['id_name'] == "cf-links":
             friends_data = category['link_list']
             break
 
-    total_friends = len(friends_data) # not friends_data['friends']
+    total_friends = len(friends_data) # không phải friends_data['friends']
     active_friends = 0
     error_friends = 0
     total_articles = 0
@@ -309,7 +310,7 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
     with ThreadPoolExecutor(max_workers=10) as executor:
         future_to_friend = {
             executor.submit(process_friend, friend, session, count, specific_RSS): friend
-            for friend in friends_data # not friends_data['friends']
+            for friend in friends_data # không phải friends_data['friends']
         }
         
         for future in as_completed(future_to_friend):
@@ -324,7 +325,7 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
                     error_friends += 1
                     error_friends_info.append(friend)
             except Exception as e:
-                logging.error(f"处理 {friend} 时发生错误: {e}", exc_info=True)
+                logging.error(f"Lỗi khi xử lý {friend}: {e}", exc_info=True)
                 error_friends += 1
                 error_friends_info.append(friend)
 
@@ -339,26 +340,26 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
         'article_data': article_data
     }
     
-    logging.info(f"数据处理完成，总共有 {total_friends} 位朋友，其中 {active_friends} 位博客可访问，{error_friends} 位博客无法访问")
+    logging.info(f"Đã hoàn thành xử lý dữ liệu, tổng cộng có {total_friends} bạn bè, trong đó {active_friends} blog có thể truy cập, {error_friends} blog không thể truy cập")
 
     return result, error_friends_info
 
 def sort_articles_by_time(data):
     """
-    对文章数据按时间排序
+    Sắp xếp dữ liệu bài viết theo thời gian
 
-    参数：
-    data (dict): 包含文章信息的字典
+    Tham số:
+    data (dict): Từ điển chứa thông tin bài viết
 
-    返回：
-    dict: 按时间排序后的文章信息字典
+    Trả về:
+    dict: Từ điển thông tin bài viết đã sắp xếp theo thời gian
     """
-    # 先确保每个元素存在时间
+    # Đảm bảo mỗi phần tử có thời gian
     for article in data['article_data']:
         if article['created'] == '' or article['created'] == None:
             article['created'] = '2024-01-01 00:00'
-            # 输出警告信息
-            logging.warning(f"文章 {article['title']} 未包含时间信息，已设置为默认时间 2024-01-01 00:00")
+            # Xuất thông tin cảnh báo
+            logging.warning(f"Bài viết {article['title']} không chứa thông tin thời gian, đã đặt thành thời gian mặc định 2024-01-01 00:00")
     
     if 'article_data' in data:
         sorted_articles = sorted(
@@ -371,89 +372,89 @@ def sort_articles_by_time(data):
 
 def marge_data_from_json_url(data, marge_json_url):
     """
-    从另一个 JSON 文件中获取数据并合并到原数据中。
+    Lấy dữ liệu từ file JSON khác và hợp nhất vào dữ liệu gốc.
 
-    参数：
-    data (dict): 包含文章信息的字典
-    marge_json_url (str): 包含另一个文章信息的 JSON 文件的 URL。
+    Tham số:
+    data (dict): Từ điển chứa thông tin bài viết
+    marge_json_url (str): URL của file JSON chứa thông tin bài viết khác.
 
-    返回：
-    dict: 合并后的文章信息字典，已去重处理
+    Trả về:
+    dict: Từ điển thông tin bài viết sau khi hợp nhất, đã xử lý trùng lặp
     """
     try:
         response = requests.get(marge_json_url, headers=HEADERS_JSON, timeout=timeout)
         marge_data = response.json()
     except Exception as e:
-        logging.error(f"无法获取链接：{marge_json_url}，出现的问题为：{e}", exc_info=True)
+        logging.error(f"Không thể lấy liên kết: {marge_json_url}, vấn đề gặp phải là: {e}", exc_info=True)
         return data
     
     if 'article_data' in marge_data:
-        logging.info(f"开始合并数据，原数据共有 {len(data['article_data'])} 篇文章，第三方数据共有 {len(marge_data['article_data'])} 篇文章")
+        logging.info(f"Bắt đầu hợp nhất dữ liệu, dữ liệu gốc có {len(data['article_data'])} bài viết, dữ liệu bên thứ ba có {len(marge_data['article_data'])} bài viết")
         data['article_data'].extend(marge_data['article_data'])
         data['article_data'] = list({v['link']:v for v in data['article_data']}.values())
-        logging.info(f"合并数据完成，现在共有 {len(data['article_data'])} 篇文章")
+        logging.info(f"Đã hoàn thành hợp nhất dữ liệu, hiện có {len(data['article_data'])} bài viết")
     return data
 
 import requests
 
 def marge_errors_from_json_url(errors, marge_json_url):
     """
-    从另一个网络 JSON 文件中获取错误信息并遍历，删除在errors中，
-    不存在于marge_errors中的友链信息。
+    Lấy thông tin lỗi từ file JSON mạng khác và duyệt, xóa trong errors,
+    thông tin liên kết bạn bè không tồn tại trong marge_errors.
 
-    参数：
-    errors (list): 包含错误信息的列表
-    marge_json_url (str): 包含另一个错误信息的 JSON 文件的 URL。
+    Tham số:
+    errors (list): Danh sách chứa thông tin lỗi
+    marge_json_url (str): URL của file JSON chứa thông tin lỗi khác.
 
-    返回：
-    list: 合并后的错误信息列表
+    Trả về:
+    list: Danh sách thông tin lỗi sau khi hợp nhất
     """
     try:
-        response = requests.get(marge_json_url, timeout=10)  # 设置请求超时时间
+        response = requests.get(marge_json_url, timeout=10)  # Đặt thời gian chờ request
         marge_errors = response.json()
     except Exception as e:
-        logging.error(f"无法获取链接：{marge_json_url}，出现的问题为：{e}", exc_info=True)
+        logging.error(f"Không thể lấy liên kết: {marge_json_url}, vấn đề gặp phải là: {e}", exc_info=True)
         return errors
 
-    # 提取 marge_errors 中的 URL
+    # Trích xuất URL từ marge_errors
     marge_urls = {item[1] for item in marge_errors}
 
-    # 使用过滤器保留 errors 中在 marge_errors 中出现的 URL
+    # Sử dụng bộ lọc giữ lại URL trong errors xuất hiện trong marge_errors
     filtered_errors = [error for error in errors if error[1] in marge_urls]
 
-    logging.info(f"合并错误信息完成，合并后共有 {len(filtered_errors)} 位朋友")
+    logging.info(f"Đã hoàn thành hợp nhất thông tin lỗi, sau khi hợp nhất có {len(filtered_errors)} bạn bè")
     return filtered_errors
 
 def deal_with_large_data(result):
     """
-    处理文章数据，保留前150篇及其作者在后续文章中的出现。
+    Xử lý dữ liệu bài viết, giữ lại 150 bài đầu tiên và sự xuất hiện của tác giả trong các bài viết tiếp theo.
     
-    参数：
-    result (dict): 包含统计数据和文章数据的字典。
+    Tham số:
+    result (dict): Từ điển chứa dữ liệu thống kê và dữ liệu bài viết.
     
-    返回：
-    dict: 处理后的数据，只包含需要的文章。
+    Trả về:
+    dict: Dữ liệu sau khi xử lý, chỉ chứa các bài viết cần thiết.
     """
     result = sort_articles_by_time(result)
     article_data = result.get("article_data", [])
 
-    # 检查文章数量是否大于 150
+    # Kiểm tra số lượng bài viết có lớn hơn 150 không
     max_articles = 150
     if len(article_data) > max_articles:
-        logging.info("数据量较大，开始进行处理...")
-        # 获取前 max_articles 篇文章的作者集合
+        logging.info("Dữ liệu lớn, bắt đầu xử lý...")
+        # Lấy tập hợp tác giả của max_articles bài viết đầu tiên
         top_authors = {article["author"] for article in article_data[:max_articles]}
 
-        # 从第 {max_articles + 1} 篇开始过滤，只保留前 max_articles 篇出现过的作者的文章
+        # Lọc từ bài viết thứ {max_articles + 1}, chỉ giữ lại bài viết của tác giả xuất hiện trong max_articles bài đầu tiên
         filtered_articles = article_data[:max_articles] + [
             article for article in article_data[max_articles:]
             if article["author"] in top_authors
         ]
 
-        # 更新结果中的 article_data
+        # Cập nhật article_data trong kết quả
         result["article_data"] = filtered_articles
-        # 更新结果中的统计数据
+        # Cập nhật dữ liệu thống kê trong kết quả
         result["statistical_data"]["article_num"] = len(filtered_articles)
-        logging.info(f"数据处理完成，保留 {len(filtered_articles)} 篇文章")
+        logging.info(f"Đã hoàn thành xử lý dữ liệu, giữ lại {len(filtered_articles)} bài viết")
 
     return result
