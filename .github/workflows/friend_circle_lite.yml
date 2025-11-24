@@ -2,11 +2,12 @@ name: Friend Circle Lite
 
 on:
   schedule:
-    - cron: "0 12 * * 1"
+    # Chạy 12:00 Việt Nam (UTC+7) = 05:00 UTC, mỗi 4 ngày
+    - cron: '0 5 */4 * *'
   workflow_dispatch:
 
 env:
-  TZ: Asia/Shanghai
+  TZ: Asia/Ho_Chi_Minh  # 🇻🇳 Múi giờ Việt Nam
 
 jobs:
   friend-circle-lite:
